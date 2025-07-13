@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = mongoose.Schema({
     fullname : {
-        tyoe : String,
+        type : String,
         required : true
     },
     username : {
@@ -22,8 +22,8 @@ const userSchema = mongoose.Schema({
     },
     gender : {
         type : String,
-        require : true,
-        enum : ["male","femail"]
+        required : true,
+        enum : ["male","female"]
     },
     profilepic : {
         type : String,

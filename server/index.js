@@ -3,7 +3,8 @@ import dotenv from "dotenv"; // dotenv is used to load environment variables fro
 import dbConnect from "./database/dbConnect.js";
 import cors from "cors"; // CORS (Cross-Origin Resource Sharing) allows frontend & backend communication
 import cookieParser from "cookie-parser"; // Parses cookies from incoming requests
-import authRout from "./rout/authRout.js"
+import authRout from "./rout/authRout.js";
+import userRout from "./rout/userRout.js";
 
 // Load environment variables (from `.env` file)
 dotenv.config();
@@ -12,7 +13,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = [""];
+const allowedOrigins = [process.env.CLIENT_URL];
 
 // 🔧 Middleware to handle CORS
 app.use(cors({
@@ -31,7 +32,9 @@ app.use(cors({
 app.use(express.json()); // Enables parsing of JSON request bodies
 app.use(cookieParser()); // Enables reading cookies in HTTP requests
 
+// 🔗 Define API routes
 app.use('/api/auth',authRout);
+app.use('/api/user',userRout);
 
 app.get('/', (req, res) => {
     res.json("Aashish Kumar Singh");
