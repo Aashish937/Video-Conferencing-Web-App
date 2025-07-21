@@ -1,9 +1,9 @@
-import {io} from 'socket.io-client';
+import { io } from "socket.io-client";
 
 let socket;
 
 const getSocket = () => {
-    if(!socket){
+    if (!socket) {
         socket = io(import.meta.env.VITE_API_SOCKET_URL);
     }
     return socket;
@@ -15,4 +15,4 @@ const setSocket = () => {
 
 export default {
     getSocket, setSocket
-};
+}
