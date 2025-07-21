@@ -1,14 +1,14 @@
 import express from "express"
-import { getAlUsers } from "../routControler/userControler.js";
+import { getAlUsers, getUserByUsernameOrEmail, getUserById } from "../routControler/userControler.js";
 import isLogin from "../middleware/isLogin.js";
 
 const router = express.Router();
 
 router.get('/', isLogin, getAlUsers)
 
-// router.search('/search',)
+router.search('/search', getUserByUsernameOrEmail)
 
-// router.post('/id',)
+router.post('/:id', getUserById)
 
 
-export default router
+export default router;

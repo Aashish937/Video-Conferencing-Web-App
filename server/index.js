@@ -1,25 +1,31 @@
+// Import required modules
 import express from "express"; // Express.js framework to create the backend server
 import dotenv from "dotenv"; // dotenv is used to load environment variables from a `.env` file
 import cors from "cors"; // CORS (Cross-Origin Resource Sharing) allows frontend & backend communication
 import cookieParser from "cookie-parser"; // Parses cookies from incoming requests
+import { createServer } from "http"; // Creates an HTTP server (needed for WebSocket support)
+import { Server } from "socket.io"; // Import `Server` from `socket.io` for real-time communication
 
-import dbConnect from "./database/dbConnect.js";
-import authRout from "./rout/authRout.js";
-import userRout from "./rout/userRout.js";
+// Import custom route files
+import authRoute from "./rout/authRout.js"; // Import authentication routes (login/signup)
+import userRoute from "./rout/userRout.js"; // Import user-related routes (profile, settings)
+import dbConnect from "./database/dbConnect.js"; // Import function to connect to MongoDB database
 
-import { createServer } from "http";
-import { Server } from "socket.io";
-
-// Load environment variables (from `.env` file)
+// ✅ Load environment variables (from `.env` file)
 dotenv.config();
 
-// Creating an Express application and setting up server port from .env or default
+// 🌍 Create an Express application
 const app = express();
+
+// 🔧 Set up server port (from `.env` or default to 3000)
 const PORT = process.env.PORT || 3000;
 
+// 📡 Create an HTTP server to work with Express (needed for WebSockets)
 const server = createServer(app);
 
+// 🌍 Allowed frontend origins for CORS (Cross-Origin Resource Sharing)
 const allowedOrigins = [process.env.CLIENT_URL];
+console.log(allowedOrigins); // Debugging: Check if the frontend URL is loaded properly
 
 // 🔧 Middleware to handle CORS
 app.use(cors({
@@ -39,125 +45,157 @@ app.use(express.json()); // Enables parsing of JSON request bodies
 app.use(cookieParser()); // Enables reading cookies in HTTP requests
 
 // 🔗 Define API routes
-app.use('/api/auth', authRout);
-app.use('/api/user', userRout);
+app.use("/api/auth", authRoute); // Authentication routes (login, signup, logout)
+app.use("/api/user", userRoute); // User-related routes (profile, settings)
 
-app.get('/', (req, res) => {
-    res.json("Aashish Kumar Singh");
+// ✅ Test Route to check if the server is running
+app.get("/ok", (req, res) => {
+    res.json({ message: "Server is running!" }); // Returns a JSON response
 });
 
-// Initialize Socket.io for real-time communication
+// 🔥 Initialize Socket.io for real-time communication
 const io = new Server(server, {
-    pingTimeout: 60000, // Set timeout for inactive users (1 minute)
+    pingTimeout: 60000, // ⏳ Set timeout for inactive users (1 minute)
     cors: {
-        origin: allowedOrigins[0], // Allow requests from the frontend URL
-        methods: ['GET', 'POST'] // Allow only these methods
-    }
+        origin: allowedOrigins[0], // ✅ Allow requests from the frontend URL
+        methods: ["GET", "POST"], // ✅ Allow only these methods
+    },
 });
-console.log("Successfully Socket.io intialized with CORS");
+console.log("[SUCCESS] Socket.io initialized with CORS"); // Debugging message
 
-let onlineUsers = [];
+// 🟢 Store online users and active calls
+let onlineUsers = []; // Array to store online users
+const activeCalls = new Map(); // Map to track ongoing calls
 
-// Handle WebSocket (Socket.io) connections
+// 📞 Handle WebSocket (Socket.io) connections
 io.on("connection", (socket) => {
-    console.log(`Information - new connection: ${socket.id}`)
+    console.log(`[INFO] New connection: ${socket.id}`); // Debugging: New user connected
 
-    // Emit an event to send the socket ID to the connected user
+    // 🔹 Emit an event to send the socket ID to the connected user
     socket.emit("me", socket.id);
 
-    // User joins the chat system
+    // 📡 User joins the chat system
     socket.on("join", (user) => {
         if (!user || !user.id) {
-            console.log("warning - Invalid User data to join");
+            console.warn("[WARNING] Invalid user data on join"); // Warn if user data is missing
             return;
         }
 
-        socket.join(user.id); // Add user to a room with their ID
+        socket.join(user.id); // 🔹 Add user to a room with their ID
         const existingUser = onlineUsers.find((u) => u.userId === user.id); // Check if user is already online
 
         if (existingUser) {
             existingUser.socketId = socket.id; // Update socket ID if user reconnects
         } else {
-            // Add new user to online users list
+            // 🟢 Add new user to online users list
             onlineUsers.push({
                 userId: user.id,
                 name: user.name,
-                socketId: socket.id
-            })
+                socketId: socket.id,
+            });
         }
-        io.emit("online-users", onlineUsers);
-    })
 
-    // Handle user disconnecting from the server
+        io.emit("online-users", onlineUsers); // 🔹 Broadcast updated online users list
+    });
+
+    // 📞 Handle outgoing call request
+    socket.on("callToUser", (data) => {
+        const callme = onlineUsers.find((user) => user.userId === data.callToUserId); // Find the user being called
+
+        if (!callme) {
+            socket.emit("userUnavailable", { message: "User is offline." }); // ❌ Notify caller if user is offline
+            return;
+        }
+
+        // 🚫 If the user is already in another call
+        if (activeCalls.has(data.callToUserId)) {
+            socket.emit("userBusy", { message: "User is currently in another call." });
+
+            io.to(callme.socketId).emit("incomingCallWhileBusy", {
+                from: data.from,
+                name: data.name,
+                email: data.email,
+                profilepic: data.profilepic,
+            });
+
+            return;
+        }
+
+        // 📞 Emit an event to the receiver's socket (callee)
+        io.to(callme.socketId).emit("callToUser", {
+            signal: data.signalData, // WebRTC signal data
+            from: data.from, // Caller ID
+            name: data.name, // Caller name
+            email: data.email, // Caller email
+            profilepic: data.profilepic, // Caller profile picture
+        });
+    });
+
+    // 📞 Handle when a call is accepted
+    socket.on("answeredCall", (data) => {
+        io.to(data.to).emit("callAccepted", {
+            signal: data.signal, // WebRTC signal
+            from: data.from, // Caller ID
+        });
+
+        // 📌 Track active calls in a Map
+        activeCalls.set(data.from, { with: data.to, socketId: socket.id });
+        activeCalls.set(data.to, { with: data.from, socketId: data.to });
+    });
+
+    // ❌ Handle call rejection
+    socket.on("reject-call", (data) => {
+        io.to(data.to).emit("callRejected", {
+            name: data.name, // Rejected user's name
+            profilepic: data.profilepic // Rejected user's profile picture
+        });
+    });
+
+    // 📴 Handle call ending
+    socket.on("call-ended", (data) => {
+        io.to(data.to).emit("callEnded", {
+            name: data.name, // User who ended the call
+        });
+
+        // 🔥 Remove call from active calls
+        activeCalls.delete(data.from);
+        activeCalls.delete(data.to);
+    });
+
+    // ❌ Handle user disconnecting from the server
     socket.on("disconnect", () => {
         const user = onlineUsers.find((u) => u.socketId === socket.id); // Find the disconnected user
-        // if (user) {
-        //     activeCalls.delete(user.userId); // Remove the user from active calls
+        if (user) {
+            activeCalls.delete(user.userId); // Remove the user from active calls
 
-        //     // Remove all calls associated with this user
-        //     for (const [key, value] of activeCalls.entries()) {
-        //         if (value.with === user.userId) activeCalls.delete(key);
-        //     }
-        // }
+            // 🔥 Remove all calls associated with this user
+            for (const [key, value] of activeCalls.entries()) {
+                if (value.with === user.userId) activeCalls.delete(key);
+            }
+        }
 
-        // Remove user from the online users list
+        // 🔥 Remove user from the online users list
         onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
 
         // 🔹 Broadcast updated online users list
         io.emit("online-users", onlineUsers);
 
         // 🔹 Notify others that the user has disconnected
-        socket.broadcast.emit("disconnectUser", { disUser: socket.id });
+        socket.broadcast.emit("discounnectUser", { disUser: socket.id });
 
         console.log(`[INFO] Disconnected: ${socket.id}`); // Debugging: User disconnected
     });
-
-    // //  Handle outgoing call request
-    // socket.on("callToUser", (data) => {
-    //     const callee = onlineUsers.find((user) => user.userId === data.callToUserId); // Find the user being called
-
-    //     if (!callee) {
-    //         socket.emit("userUnavailable", { message: "User is offline." }); // ❌ Notify caller if user is offline
-    //         return;
-    //     }
-
-    //     // If the user is already in another call
-    //     if (activeCalls.has(data.callToUserId)) {
-    //         socket.emit("userBusy", { message: "User is currently in another call." });
-
-    //         io.to(callee.socketId).emit("incomingCallWhileBusy", {
-    //             from: data.from,
-    //             name: data.name,
-    //             email: data.email,
-    //             profilepic: data.profilepic,
-    //         });
-
-    //         return;
-    //     }
-
-    //     // Emit an event to the receiver's socket (callee)
-    //     io.to(callee.socketId).emit("callToUser", {
-    //         signal: data.signalData, // WebRTC signal data
-    //         from: data.from, // Caller ID
-    //         name: data.name, // Caller name
-    //         email: data.email, // Caller email
-    //         profilepic: data.profilepic, // Caller profile picture
-    //     });
-    // });
 });
 
-
+// 🏁 Start the server after connecting to the database
 (async () => {
     try {
-        await dbConnect();
-
+        await dbConnect(); // Connect to MongoDB
         server.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        })
+            console.log(`✅ Server is running on port ${PORT}`);
+        });
     } catch (error) {
-        console.error("Failed to connect to the database: ", error);
-        process.exit(1);
+        console.error("❌ Failed to connect to the database:", error);
+        process.exit(1); // Exit the process if the database connection fails
     }
 })();
-
-// const server = createServer(app);
