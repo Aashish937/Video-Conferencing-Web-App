@@ -45,8 +45,8 @@ app.use(express.json()); // Enables parsing of JSON request bodies
 app.use(cookieParser()); // Enables reading cookies in HTTP requests
 
 // 🔗 Define API routes
-app.use("/api/auth", authRoute); // Authentication routes (login, signup, logout)
-app.use("/api/user", userRoute); // User-related routes (profile, settings)
+app.use("/auth", authRoute); // Authentication routes (login, signup, logout)
+app.use("/user", userRoute); // User-related routes (profile, settings)
 
 // ✅ Test Route to check if the server is running
 app.get("/ok", (req, res) => {
