@@ -33,5 +33,8 @@ export default defineConfig({
   },
   define: {
     global: "window" // Critical fix for `global is not defined`
+  },
+  build:{
+    chunkSizeWarningLimit: 1500,
   }
 })
