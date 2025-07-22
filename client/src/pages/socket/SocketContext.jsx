@@ -4,7 +4,7 @@ let socket;
 
 const getSocket = () => {
     if (!socket) {
-        socket = io(import.meta.env.VITE_API_SOCKET_URL);
+        socket = io("https://video-conferencing-web-app-server.onrender.com");
     }
     return socket;
 }
