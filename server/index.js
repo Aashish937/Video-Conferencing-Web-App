@@ -29,13 +29,7 @@ console.log(allowedOrigins); // Debugging: Check if the frontend URL is loaded p
 
 // 🔧 Middleware to handle CORS
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true); // ✅ Allow the request if it's from an allowed origin
-        } else {
-            callback(new Error('Not allowed by CORS')); // ❌ Block requests from unknown origins
-        }
-    },
+    origin: "*",
     credentials: true, // ✅ Allow sending cookies with requests
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // ✅ Allow these HTTP methods
 }));
