@@ -29,7 +29,7 @@ console.log(allowedOrigins); // Debugging: Check if the frontend URL is loaded p
 
 // 🔧 Middleware to handle CORS
 app.use(cors({
-    origin: "*",
+    origin: 'https://video-conferencing-web-app.netlify.app',
     credentials: true, // ✅ Allow sending cookies with requests
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // ✅ Allow these HTTP methods
 }));
