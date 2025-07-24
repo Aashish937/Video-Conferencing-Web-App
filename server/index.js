@@ -44,6 +44,8 @@ app.use(cors({
 app.use(express.json()); // Enables parsing of JSON request bodies
 app.use(cookieParser()); // Enables reading cookies in HTTP requests
 
+app.options('*', cors());
+
 // 🔗 Define API routes
 app.use("/auth", authRoute); // Authentication routes (login, signup, logout)
 app.use("/user", userRoute); // User-related routes (profile, settings)
