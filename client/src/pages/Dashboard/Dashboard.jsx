@@ -44,12 +44,16 @@ const Dashboard = () => {
     const [isMicOn, setIsMicOn] = useState(true);
     const [isCamOn, setIsCamOn] = useState(true);
 
+    const ringtone = useRef(null);
+
     // 🔥 Load ringtone
-    const ringtone = new Howl({
-        src: ["/ringtone.mp3"], // ✅ Replace with your ringtone file
-        loop: false,  // ✅ Keep ringing until stopped
-        volume: 1.0, // ✅ Full volume
-    });
+    useEffect(() => {
+        ringtone.current = new Howl({
+            src: ['/ringtone.mp3'],
+            loop: true,
+            volume: 1.0,
+        });
+    }, []);
 
     const socket = socketInstance.getSocket();
 
@@ -70,21 +74,24 @@ const Dashboard = () => {
             setCallerName(data.name);  // Store caller's name.
             setCallerSignal(data.signal);  // Store WebRTC signal data for the call.
             // ✅ Start playing ringtone
-            ringtone.play();
+            if (ringtone.current && !ringtone.current.playing()) {
+                console.log("🔔 Ringtone playing...");
+                ringtone.current.play();
+            }
         });
         // Listen for "callRejected" event, which is triggered when the other user declines the call.
         socket.on("callRejected", (data) => {
             setCallRejectedPopUp(true);
             setCallrejectorData(data);
-            // ✅ Stop ringtone in case call is ended before acceptance
-            // ✅ Stop ringtone when call is accepted
-            ringtone.stop();
         });
         // Listen for "callEnded" event, which is triggered when the other user ends the call.
         socket.on("callEnded", (data) => {
             console.log("Call ended by", data.name); // Log the event in the console.
             // ✅ Stop ringtone in case call is ended before acceptance
-            ringtone.stop();
+            if (ringtone.current?.playing()) {
+                console.log("❌ Call rejected: stopping ringtone");
+                ringtone.current.stop();
+            }
             endCallCleanup();  // Call a function to clean up the call state.
         });
         // Listen for "userUnavailable" event, meaning the user being called is not online.
@@ -171,6 +178,7 @@ const Dashboard = () => {
                 setCaller(data.from); // ✅ Store caller's ID
                 peer.signal(data.signal); // ✅ Pass the received WebRTC signal to establish the connection
             });
+
             // ✅ Store the peer connection reference to manage later (like ending the call)
             connectionRef.current = peer;
             // ✅ Close the user detail modal after initiating the call
@@ -182,7 +190,10 @@ const Dashboard = () => {
 
     const handelacceptCall = async () => {
         // ✅ Stop ringtone when call is accepted
-        ringtone.stop();
+        if (ringtone.current?.playing()) {
+            console.log("🔔 Ringtone playing...");
+            ringtone.current.stop();
+        }
         try {
             // ✅ Request access to the user's media devices (camera & microphone)
             const currentStream = await navigator.mediaDevices.getUserMedia({
@@ -248,7 +259,10 @@ const Dashboard = () => {
 
     const handelrejectCall = () => {
         // ✅ Stop ringtone when call is accepted
-        ringtone.stop();
+        if (ringtone.current?.playing()) {
+            console.log("❌ Call rejected: stopping ringtone");
+            ringtone.current.stop();
+        }
         // ✅ Update the state to indicate that the call is rejected
         setCallerWating(false);//reciver reject the call
         setReciveCall(false); // ✅ The user is no longer receiving a call
@@ -263,10 +277,6 @@ const Dashboard = () => {
     };
 
     const handelendCall = () => {
-        // ✅ Stop ringtone when call is accepted
-        console.log("🔴 Sending call-ended event...");
-        // ✅ Stop ringtone when call is accepted
-        ringtone.stop();
         // ✅ Notify the other user that the call has ended
         socket.emit("call-ended", {
             to: caller?.from || selectedUser, // ✅ Send call end signal to the caller or selected user
@@ -278,6 +288,10 @@ const Dashboard = () => {
     };
 
     const endCallCleanup = () => {
+        if (ringtone.current?.playing()) {
+            console.log("❌ Call rejected: stopping ringtone");
+            ringtone.current.stop();
+        }
         // ✅ Stop all media tracks (video & audio) to release device resources
         console.log("🔴 Stopping all media streams and resetting call...");
         if (stream) {
@@ -297,7 +311,7 @@ const Dashboard = () => {
         connectionRef.current?.destroy();
         // ✅ Reset all relevant states to indicate call has ended
         // ✅ Stop ringtone when call is accepted
-        ringtone.stop();
+        ringtone.current.stop();
         setCallerWating(false);
         setStream(null); // ✅ Remove video/audio stream
         setReciveCall(false); // ✅ Indicate no ongoing call
