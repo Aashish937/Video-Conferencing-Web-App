@@ -24,19 +24,12 @@ const PORT = process.env.PORT || 3000;
 const server = createServer(app);
 
 // 🌍 Allowed frontend origins for CORS (Cross-Origin Resource Sharing)
-const allowedOrigins = [process.env.CLIENT_URL];
+const allowedOrigins = process.env.CLIENT_URL;
 console.log(allowedOrigins); // Debugging: Check if the frontend URL is loaded properly
 
 // 🔧 Middleware to handle CORS
 app.use(cors({
-    origin: (origin, callback) => {
-        console.log("Incoming Origin:", origin); // debug
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, origin);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: allowedOrigins,
     credentials: true, // ✅ Allow sending cookies with requests
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // ✅ Allow these HTTP methods
 }));
@@ -59,7 +52,7 @@ app.get("/", (req, res) => {
 const io = new Server(server, {
     pingTimeout: 60000, // ⏳ Set timeout for inactive users (1 minute)
     cors: {
-        origin: allowedOrigins[0], // ✅ Allow requests from the frontend URL
+        origin: allowedOrigins, // ✅ Allow requests from the frontend URL
         methods: ["GET", "POST"], // ✅ Allow only these methods
     },
 });
