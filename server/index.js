@@ -24,12 +24,19 @@ const PORT = process.env.PORT || 3000;
 const server = createServer(app);
 
 // 🌍 Allowed frontend origins for CORS (Cross-Origin Resource Sharing)
-const allowedOrigins = process.env.CLIENT_URL;
+const allowedOrigins = [process.env.CLIENT_URL];
 console.log(allowedOrigins); // Debugging: Check if the frontend URL is loaded properly
 
 // 🔧 Middleware to handle CORS
 app.use(cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+        console.log("Url Origin : ",origin);
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true); // ✅ Allow the request if it's from an allowed origin
+        } else {
+            callback(new Error('Not allowed by CORS')); // ❌ Block requests from unknown origins
+        }
+    },
     credentials: true, // ✅ Allow sending cookies with requests
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // ✅ Allow these HTTP methods
 }));
@@ -45,14 +52,14 @@ app.use("/user", userRoute); // User-related routes (profile, settings)
 
 // ✅ Test Route to check if the server is running
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to the backend!" });
+    res.json({ message: "Welcome to the backend!" });
 });
 
 // 🔥 Initialize Socket.io for real-time communication
 const io = new Server(server, {
     pingTimeout: 60000, // ⏳ Set timeout for inactive users (1 minute)
     cors: {
-        origin: allowedOrigins, // ✅ Allow requests from the frontend URL
+        origin: allowedOrigins[0], // ✅ Allow requests from the frontend URL
         methods: ["GET", "POST"], // ✅ Allow only these methods
     },
 });
