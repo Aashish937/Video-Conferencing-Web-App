@@ -30,6 +30,7 @@ console.log(allowedOrigins); // Debugging: Check if the frontend URL is loaded p
 // 🔧 Middleware to handle CORS
 app.use(cors({
     origin: (origin, callback) => {
+        console.log("Incoming Origin:", origin); // debug
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, origin);
         } else {
@@ -50,8 +51,8 @@ app.use("/auth", authRoute); // Authentication routes (login, signup, logout)
 app.use("/user", userRoute); // User-related routes (profile, settings)
 
 // ✅ Test Route to check if the server is running
-app.get("/ok", (req, res) => {
-    res.json({ message: "Server is running!" }); // Returns a JSON response
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to the backend!" });
 });
 
 // 🔥 Initialize Socket.io for real-time communication
