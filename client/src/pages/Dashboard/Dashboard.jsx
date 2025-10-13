@@ -437,35 +437,37 @@ const Dashboard = () => {
                 />
 
                 {/* User List */}
-                <ul className="space-y-4 overflow-y-auto">
-                    {filteredUsers.map((user) => (
-                        <li
-                            key={user._id}
-                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${selectedUser === user._id
-                                ? "bg-green-600"
-                                : "bg-gradient-to-r from-purple-600 to-blue-400"
-                                }`}
-                            onClick={() => handelSelectedUser(user._id)}
-                        >
-                            <div className="relative">
-                                <img
-                                    src={user.profilepic || "/default-avatar.png"}
-                                    alt={`${user.username}'s profile`}
-                                    className="w-10 h-10 rounded-full border border-white"
-                                />
-                                {isOnlineUser(user._id) && (
-                                    <span className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full shadow-lg animate-bounce"></span>
-                                )}
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-sm">{user.username}</span>
-                                <span className="text-xs text-gray-400 truncate w-32">
-                                    {user.email}
-                                </span>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
+                    <ul className="space-y-4 overflow-y-auto">
+                        {filteredUsers.map((user) => (
+                            <li
+                                key={user._id}
+                                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${selectedUser === user._id
+                                    ? "bg-green-600"
+                                    : "bg-gradient-to-r from-purple-600 to-blue-400"
+                                    }`}
+                                onClick={() => handelSelectedUser(user._id)}
+                            >
+                                <div className="relative">
+                                    <img
+                                        src={user.profilepic || "/default-avatar.png"}
+                                        alt={`${user.username}'s profile`}
+                                        className="w-10 h-10 rounded-full border border-white"
+                                    />
+                                    {isOnlineUser(user._id) && (
+                                        <span className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full shadow-lg animate-bounce"></span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-sm">{user.username}</span>
+                                    <span className="text-xs text-gray-400 truncate w-32">
+                                        {user.email}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
 
                 {/* Logout */}
                 {user && <div
