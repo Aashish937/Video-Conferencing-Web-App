@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import AuthForm from './pages/Auth/AuthForm';
+import AuthForm from './pages/Auth/Auth';
 import Dashboard from './pages/Dashboard/Dashboard.jsx'
 import IsLogin from './pages/Auth/IsLogin.jsx';
 function App() {

@@ -1,21 +1,18 @@
 import User from "../schema/userSchema.js";
 import jwt from "jsonwebtoken";
 
-export const getAlUsers = async (req,res) => {
-    const currentUserId = req.user?._conditions?._id;
-    if(!currentUserId) return res.status(401).json({success : false, message : "unauthorized"});
+// Get all users (excluding current logged-in user)
+export const getAllUsers = async (req, res) => {
+    const currentUserID = req.user?._conditions?._id;
+   // console.log("current user",currentUserID);
+    if (!currentUserID) return res.status(401).json({ success: false, message: "Unauthorized." });
     try {
-        const users = await User.find({_id:{$ne:currentUserId}},"profilepic email username gender");
-        res.status(200).json({success:true, users});
+        const users = await User.find({ _id: { $ne: currentUserID } }, "profilepic email username");
+        res.status(200).json({ success: true, users });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error
-        });
-        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
     }
-}
-
+};
 // Search user by username or email
 export const getUserByUsernameOrEmail = async (req, res) => {
     const { query } = req.query;
@@ -24,7 +21,7 @@ export const getUserByUsernameOrEmail = async (req, res) => {
     try {
         const user = await User.findOne(
             { $or: [{ username: query }, { email: query }] },
-            "fullname email username gender"
+            "fullname email username"
         );
 
         if (!user) return res.status(404).json({ success: false, message: "User not found." });

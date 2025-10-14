@@ -1,14 +1,17 @@
-import express from "express"
-import { getAlUsers, getUserByUsernameOrEmail, getUserById } from "../routControler/userControler.js";
+// routes/userRoutes.js
+import express from "express";
+import { getAllUsers, getUserByUsernameOrEmail, getUserById } from "../routControler/userControler.js";
 import isLogin from "../middleware/isLogin.js";
 
 const router = express.Router();
 
-router.get('/', isLogin, getAlUsers)
+// Route to get all users
+router.get("/",isLogin,getAllUsers);
 
-router.search('/search', getUserByUsernameOrEmail)
+// Route to get a user by username or email
+router.get("/search", getUserByUsernameOrEmail);
 
-router.post('/:id', getUserById)
-
+// Route to get a user by ID
+router.get("/:id", getUserById);
 
 export default router;
