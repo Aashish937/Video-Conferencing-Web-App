@@ -7,8 +7,8 @@ const jwtToken =  (userId , res)=>{
     res.cookie("jwt",token,{
         maxAge: 30 *24 *60 *60 *1000,
         httpOnly:true,
-        sameSite:"None",
         secure:true,
+        sameSite:"None",
         path: '/' 
     })
     return token;
