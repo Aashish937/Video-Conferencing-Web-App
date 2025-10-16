@@ -4,7 +4,7 @@ import User from '../schema/userSchema.js'
 const isLogin = async(req, res, next) => {
     try {
         console.log("req.cookies.jwt ",req.cookies.jwt);
-        console.log("req.headers.cookie",req.headers.cookie);
+        console.log("req.headers.cookie",req.headers);
         const token = req.cookies.jwt || req.headers.cookie.split("; ").find((cookie) => cookie.startsWith("jwt="))?.split("=")[1];
         
         console.log("token ",token);
