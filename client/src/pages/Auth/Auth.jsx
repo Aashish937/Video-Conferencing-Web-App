@@ -6,7 +6,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContextApi';
 
 
-
 const AuthForm = ({ type }) => {
       const {updateUser } = useUser();
     const navigate = useNavigate();
@@ -24,35 +23,39 @@ const AuthForm = ({ type }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (type === 'signup' && formData.password !== formData.confirmPassword) {
-            toast.error('Passwords do not match!');
-            return;
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (type === 'signup' && formData.password !== formData.confirmPassword) {
+        toast.error('Passwords do not match!');
+        return;
+    }
+    setLoading(true);
+    try {
+        const endpoint = type === 'signup' ? '/auth/signup' : '/auth/login';
+        const response = await apiClient.post(endpoint, formData);
+
+        toast.success(response.data.message || 'Success!');
+
+        if (type === 'signup') {
+            navigate('/login');
         }
-        setLoading(true);
-        try {
-            const endpoint = type === 'signup' ? '/auth/signup' : '/auth/login';
-            const response = await apiClient.post(endpoint, formData);
-            toast.success(response.data.message || 'Success!');
-            if(type === 'signup'){
-                navigate('/login')
+
+        if (type === 'login') {
+            updateUser(response.data);
+
+            // ✅ Store JWT token in localStorage
+            if (response.data.token) {
+                localStorage.setItem('jwt', response.data.token);
             }
-            if (type === 'login') {
-                updateUser(response.data)
-                //localStorage.setItem('userData', JSON.stringify(response.data));
-                // Save token in cookies
-                const date = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-                const expires = "expires=" + date.toUTCString();
-                document.cookie = `jwt=${response.data.token}; path=/; ${expires}`;
-                navigate('/')
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Something went wrong!');
-        } finally {
-            setLoading(false);
+
+            navigate('/');
         }
-    };
+    } catch (error) {
+        toast.error(error.response?.data?.message || 'Something went wrong!');
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-800 text-white">

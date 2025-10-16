@@ -23,18 +23,18 @@ export const SignUp = async (req, res) => {
         })
         if (newUser) {
             await newUser.save();
-            jwtToken(newUser._id, res)
+            const token = jwtToken(newUser._id, res); // ✅ capture token
+            res.status(201).send({
+                _id: newUser._id,
+                fullname: newUser.fullname,
+                username: newUser.username,
+                profilepic: newUser.profilepic,
+                email: newUser.email,
+                token, // ✅ include token in response
+            })
         } else {
             res.status(500).send({ success: false, message: "Inavlid User Data" })
         }
-        res.status(201).send({
-            _id: newUser._id,
-            fullname: newUser.fullname,
-            username: newUser.username,
-            profilepic: newUser.profilepic,
-            email: newUser.email,
-        })
-
     } catch (error) {
         res.status(500).send({
             success: false,
@@ -63,7 +63,7 @@ export const Login = async (req, res) => {
             profilepic: user.profilepic,
             email: user.email,
             message: "Succesfully LogIn",
-            token
+            token // ✅ already present (kept same)
         })
     } catch (error) {
         res.status(500).send({

@@ -3,9 +3,12 @@ import User from '../schema/userSchema.js'
 
 const isLogin = async(req, res, next) => {
     try {
-        console.log("req.cookies.jwt ",req.cookies.jwt);
-        console.log("req.headers.cookie",req.headers);
-        const token = req.cookies.jwt || req.headers.cookie.split("; ").find((cookie) => cookie.startsWith("jwt="))?.split("=")[1];
+        let token = req.body?.token;
+
+        // 3️⃣ If not in cookies, try Authorization header
+        if (!token && req.headers?.authorization) {
+            token = req.headers.authorization.split(' ')[1]; // Bearer <token>
+        }
         
         console.log("token ",token);
         if (!token) return res.status(500).send({ success: false, message: "User Unauthorize" });

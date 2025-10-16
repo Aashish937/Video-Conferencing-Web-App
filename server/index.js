@@ -43,6 +43,7 @@ app.use(cors({
 
 // 🛠 Middleware for handling JSON requests and cookies
 app.use(express.json()); // Enables parsing of JSON request bodies
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // Enables reading cookies in HTTP requests
 
 // 🔗 Define API routes
